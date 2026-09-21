@@ -1,13 +1,19 @@
 package com.yogev.youtubeupdater.data
 
 import android.content.Context
+import com.yogev.youtubeupdater.BuildConfig
 
 /** Coordinates GitHub lookups with the device's installed versions. */
 class UpdateRepository(private val context: Context) {
 
     private val prefs = Prefs(context)
 
-    private fun client(): GitHubClient = GitHubClient(Http.client, prefs.token)
+    private fun client(): GitHubClient {
+        // In-app token wins; otherwise fall back to the embedded build-time token.
+        val token = prefs.token
+            ?: BuildConfig.DEFAULT_GITHUB_TOKEN.takeIf { it.isNotBlank() }
+        return GitHubClient(Http.client, token)
+    }
 
     /**
      * Loads statuses. Network is hit only when [force] is set or the cache is
