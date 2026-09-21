@@ -28,10 +28,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +43,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.yogev.youtubeupdater.data.AppStatus
 import com.yogev.youtubeupdater.notify.Notifications
@@ -91,6 +96,22 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
         }
     }
 
+    fun uninstall(packageName: String) {
+        val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
+        context.startActivity(intent)
+    }
+
+    // Refresh installed/available state whenever the screen returns to foreground
+    // (e.g. after an install or uninstall completes).
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -127,6 +148,7 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
                         busy = state.busyKey == status.source.key,
                         progress = state.progress,
                         onUpdate = { startUpdate(status) },
+                        onUninstall = { uninstall(it) },
                     )
                 }
             }
@@ -150,6 +172,7 @@ private fun AppCard(
     busy: Boolean,
     progress: Float,
     onUpdate: () -> Unit,
+    onUninstall: (String) -> Unit,
 ) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
@@ -167,6 +190,21 @@ private fun AppCard(
                 Spacer(Modifier.height(4.dp))
                 Text(it, color = MaterialTheme.colorScheme.error, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
+
+            // Warn about a non-RE variant and offer to remove it before installing.
+            status.conflicts.forEach { conflict ->
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "מותקנת גרסה אחרת: ${conflict.label}. מומלץ להסיר לפני התקנת RE.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(4.dp))
+                OutlinedButton(onClick = { onUninstall(conflict.packageName) }) {
+                    Text("הסר ${conflict.label}")
+                }
+            }
+
             Spacer(Modifier.height(12.dp))
 
             if (busy) {

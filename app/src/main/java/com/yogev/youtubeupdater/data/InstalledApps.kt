@@ -26,4 +26,13 @@ object InstalledApps {
     } catch (e: PackageManager.NameNotFoundException) {
         null
     }
+
+    /** App label if installed & visible, else null. */
+    fun label(context: Context, packageName: String): String? = try {
+        val pm = context.packageManager
+        val ai = pm.getApplicationInfo(packageName, 0)
+        pm.getApplicationLabel(ai).toString()
+    } catch (e: PackageManager.NameNotFoundException) {
+        null
+    }
 }

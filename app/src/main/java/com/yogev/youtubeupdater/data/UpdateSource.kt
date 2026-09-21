@@ -15,6 +15,8 @@ data class UpdateSource(
     /** How many release pages to scan (SCAN mode only). */
     val scanPages: Int = 1,
     val perPage: Int = 30,
+    /** Other (non-RE) variants of this app to offer removing before install. */
+    val conflictingPackages: List<String> = emptyList(),
 ) {
     enum class Mode { LATEST, SCAN }
 }
@@ -49,6 +51,10 @@ object Sources {
         repo = "MicroG-RE",
         assetPattern = Regex("""^microg-([0-9][0-9.]*)\.apk$"""),
         mode = UpdateSource.Mode.LATEST,
+        conflictingPackages = listOf(
+            "com.mgoogle.android.gms", // Vanced microG
+            "org.microg.gms",          // standard microG
+        ),
     )
 
     val ALL = listOf(YOUTUBE, MICROG)

@@ -20,6 +20,12 @@ class Downloader(private val context: Context) {
             val dir = File(context.cacheDir, "apks").apply { mkdirs() }
             val target = File(dir, remote.assetName)
 
+            // Skip the download if this exact version is already cached and valid.
+            if (isCachedValid(target, remote)) {
+                onProgress(1f)
+                return@withContext target
+            }
+
             val request = Request.Builder().url(remote.downloadUrl).build()
             Http.client.newCall(request).execute().use { resp ->
                 if (!resp.isSuccessful) throw IOException("הורדה נכשלה (${resp.code})")
@@ -54,4 +60,25 @@ class Downloader(private val context: Context) {
             }
             target
         }
+
+    /** A previously downloaded file counts as valid if its SHA-256 (when known)
+     *  or size matches — so we install instead of re-downloading. */
+    private fun isCachedValid(file: File, remote: RemoteRelease): Boolean {
+        if (!file.exists() || file.length() == 0L) return false
+        val expected = remote.sha256
+        if (expected != null) {
+            val digest = MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(64 * 1024)
+                while (true) {
+                    val n = input.read(buffer)
+                    if (n == -1) break
+                    digest.update(buffer, 0, n)
+                }
+            }
+            val actual = digest.digest().joinToString("") { "%02x".format(it) }
+            return actual.equals(expected, ignoreCase = true)
+        }
+        return remote.sizeBytes > 0 && file.length() == remote.sizeBytes
+    }
 }

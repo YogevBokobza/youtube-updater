@@ -11,11 +11,20 @@ class UpdateRepository(private val context: Context) {
 
     suspend fun status(source: UpdateSource): AppStatus {
         val installed = InstalledApps.get(context, source.packageName)
+        val conflicts = source.conflictingPackages.mapNotNull { pkg ->
+            InstalledApps.label(context, pkg)?.let { ConflictPackage(pkg, it) }
+        }
         return try {
             val remote = client().resolve(source, prefs.includePrereleases)
-            AppStatus(source, installed?.versionName, remote)
+            AppStatus(source, installed?.versionName, remote, conflicts = conflicts)
         } catch (e: Exception) {
-            AppStatus(source, installed?.versionName, remote = null, error = e.message ?: "שגיאה")
+            AppStatus(
+                source,
+                installed?.versionName,
+                remote = null,
+                error = e.message ?: "שגיאה",
+                conflicts = conflicts,
+            )
         }
     }
 

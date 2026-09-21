@@ -12,6 +12,9 @@
     <queries>
         <package android:name="app.morphe.android.youtube" />
         <package android:name="app.revanced.android.gms" />
+        <!-- Legacy / non-RE microG variants we offer to remove before installing RE. -->
+        <package android:name="com.mgoogle.android.gms" />
+        <package android:name="org.microg.gms" />
     </queries>
 
     <application

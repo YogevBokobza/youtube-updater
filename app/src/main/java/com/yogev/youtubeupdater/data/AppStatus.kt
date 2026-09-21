@@ -1,11 +1,18 @@
 package com.yogev.youtubeupdater.data
 
+/** A conflicting (non-RE) variant found installed on the device. */
+data class ConflictPackage(
+    val packageName: String,
+    val label: String,
+)
+
 /** Combined installed + remote state for one monitored app. */
 data class AppStatus(
     val source: UpdateSource,
     val installedVersion: String?,
     val remote: RemoteRelease?,
     val error: String? = null,
+    val conflicts: List<ConflictPackage> = emptyList(),
 ) {
     val isInstalled: Boolean get() = installedVersion != null
 
