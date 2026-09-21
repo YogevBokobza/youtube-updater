@@ -26,13 +26,12 @@ object Sources {
      * carries only a subset of apps, so the youtube-morphe APK is rarely in
      * `releases/latest` — we scan the recent releases instead.
      *
-     * Package name defaults to the ReVanced/Morphe GmsCore package; verify on the
-     * device (Settings → Apps → YouTube Morphe) and adjust if different.
+     * Package name confirmed from the Morphe-patched APK manifest.
      */
     val YOUTUBE = UpdateSource(
         key = "youtube",
         displayName = "YouTube Morphe",
-        packageName = "app.revanced.android.youtube",
+        packageName = "app.morphe.android.youtube",
         owner = "j-hc",
         repo = "revanced-magisk-module",
         assetPattern = Regex("""^youtube-morphe-v(.+)-all\.apk$"""),
