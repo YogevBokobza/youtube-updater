@@ -25,6 +25,7 @@ data class GhAsset(
 )
 
 /** A resolved candidate: the newest matching APK for a source. */
+@Serializable
 data class RemoteRelease(
     val version: String,
     val assetName: String,

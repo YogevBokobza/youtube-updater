@@ -85,6 +85,7 @@ class GitHubClient(
         val builder = Request.Builder()
             .url(url)
             .header("Accept", "application/vnd.github+json")
+            .header("User-Agent", "youtube-updater")
             .header("X-GitHub-Api-Version", "2022-11-28")
         if (!token.isNullOrBlank()) builder.header("Authorization", "Bearer $token")
         client.newCall(builder.build()).execute().use { resp ->

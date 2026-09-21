@@ -42,11 +42,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         refresh()
     }
 
-    fun refresh() {
+    /** [force] = true hits GitHub now (the refresh button); false uses the cache
+     *  unless it is stale, so returning to the screen doesn't spend rate limit. */
+    fun refresh(force: Boolean = false) {
         if (_state.value.loading) return
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
-            val items = repo.statuses()
+            val items = repo.loadStatuses(force)
             _state.update { it.copy(items = items, loading = false) }
         }
     }

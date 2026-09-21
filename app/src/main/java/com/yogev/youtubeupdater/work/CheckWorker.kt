@@ -17,7 +17,7 @@ class CheckWorker(
         val repo = UpdateRepository(applicationContext)
         val prefs = Prefs(applicationContext)
         return try {
-            for (status in repo.statuses()) {
+            for (status in repo.loadStatuses(force = true)) {
                 if (!status.updateAvailable) continue
                 val version = status.remote?.version ?: continue
                 if (prefs.lastNotifiedVersion(status.source.key) != version) {

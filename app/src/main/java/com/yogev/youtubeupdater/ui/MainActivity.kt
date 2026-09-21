@@ -117,7 +117,7 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
             TopAppBar(
                 title = { Text(text = androidx.compose.ui.res.stringResource(com.yogev.youtubeupdater.R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
+                    IconButton(onClick = { viewModel.refresh(force = true) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "רענן")
                     }
                     IconButton(onClick = { showSettings = true }) {
