@@ -21,6 +21,16 @@ fun cfg(env: String, prop: String): String? =
 val releaseStoreFile = cfg("KEYSTORE_FILE", "storeFile")
 val hasReleaseSigning = releaseStoreFile != null && file(releaseStoreFile).exists()
 
+// On a tag build (CI), derive the version from the tag "vX.Y.Z" so publishing a
+// release needs no code edits. Locally, fall back to a base version.
+val tagVersion = System.getenv("GITHUB_REF_NAME")
+    ?.removePrefix("v")
+    ?.takeIf { Regex("""\d+\.\d+\.\d+""").matches(it) }
+val appVersionName = tagVersion ?: "1.0.6"
+val appVersionCode = appVersionName.split(".").let {
+    it[0].toInt() * 10000 + it[1].toInt() * 100 + it[2].toInt()
+}
+
 android {
     namespace = "com.yogev.youtubeupdater"
     compileSdk = 35
@@ -29,8 +39,8 @@ android {
         applicationId = "com.yogev.youtubeupdater"
         minSdk = 26
         targetSdk = 31
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = appVersionCode
+        versionName = appVersionName
         vectorDrawables { useSupportLibrary = true }
 
         // Optional embedded read-only GitHub token to raise the API rate limit.
