@@ -29,15 +29,15 @@ android {
         applicationId = "com.yogev.youtubeupdater"
         minSdk = 26
         targetSdk = 31
-        versionCode = 6
-        versionName = "1.0.5"
+        versionCode = 7
+        versionName = "1.0.6"
         vectorDrawables { useSupportLibrary = true }
 
         // Optional embedded read-only GitHub token to raise the API rate limit.
         // Provided at build time via -PgithubToken=... or the GITHUB_DEFAULT_TOKEN
         // env var; never committed. A token set in-app Settings takes precedence.
         val embeddedToken = (project.findProperty("githubToken") as String?)
-            ?: System.getenv("GITHUB_DEFAULT_TOKEN")
+            ?: System.getenv("EMBEDDED_GH_TOKEN")
             ?: ""
         buildConfigField("String", "DEFAULT_GITHUB_TOKEN", "\"$embeddedToken\"")
     }

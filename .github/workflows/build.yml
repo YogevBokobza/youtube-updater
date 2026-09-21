@@ -17,6 +17,7 @@ jobs:
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
       KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
       KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      EMBEDDED_GH_TOKEN: ${{ secrets.EMBEDDED_GH_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4

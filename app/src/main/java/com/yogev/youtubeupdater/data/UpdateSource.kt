@@ -57,7 +57,18 @@ object Sources {
         ),
     )
 
-    val ALL = listOf(YOUTUBE, MICROG)
+    /** The updater itself — enables in-app self-update from its own releases. */
+    val SELF = UpdateSource(
+        key = "self",
+        displayName = "מעדכן YouTube (האפליקציה)",
+        packageName = "com.yogev.youtubeupdater",
+        owner = "YogevBokobza",
+        repo = "youtube-updater",
+        assetPattern = Regex("""^youtube-updater-v(.+)\.apk$"""),
+        mode = UpdateSource.Mode.LATEST,
+    )
+
+    val ALL = listOf(YOUTUBE, MICROG, SELF)
 
     fun byKey(key: String): UpdateSource? = ALL.firstOrNull { it.key == key }
 }
