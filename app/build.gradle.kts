@@ -29,8 +29,8 @@ android {
         applicationId = "com.yogev.youtubeupdater"
         minSdk = 26
         targetSdk = 31
-        versionCode = 5
-        versionName = "1.0.4"
+        versionCode = 6
+        versionName = "1.0.5"
         vectorDrawables { useSupportLibrary = true }
 
         // Optional embedded read-only GitHub token to raise the API rate limit.
