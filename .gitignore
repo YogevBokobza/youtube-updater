@@ -12,3 +12,6 @@ local.properties
 *.jks
 *.keystore
 keystore.properties
+
+# Built APKs (distributed via GitHub Releases, not committed)
+*.apk
