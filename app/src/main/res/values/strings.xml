@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מעדכן YouTube</string>
+    <string name="check_now">בדוק עכשיו</string>
+    <string name="checking">בודק עדכונים…</string>
+    <string name="installed">מותקן</string>
+    <string name="available">זמין</string>
+    <string name="not_installed">לא מותקן</string>
+    <string name="up_to_date">מעודכן</string>
+    <string name="update">עדכן</string>
+    <string name="install">התקן</string>
+    <string name="downloading">מוריד…</string>
+    <string name="settings">הגדרות</string>
+    <string name="notif_channel_name">עדכוני אפליקציות</string>
+    <string name="notif_channel_desc">התראות על גרסאות חדשות</string>
+    <string name="update_available_title">גרסה חדשה זמינה</string>
+</resources>
