@@ -98,8 +98,16 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
     }
 
     fun uninstall(packageName: String) {
-        val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
-        context.startActivity(intent)
+        try {
+            val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(
+                context,
+                "לא ניתן לפתוח מסך הסרה: ${e.message}",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+        }
     }
 
     // The ViewModel sets this once a signature-mismatch replace has downloaded
@@ -229,10 +237,16 @@ private fun AppCard(
                 Text("מוריד… ${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
             } else if (replacing) {
                 Text(
-                    "הורד הושלם — אשר את מחיקת הגרסה הישנה במכשיר; ההתקנה תמשיך אוטומטית.",
+                    "ההורדה הושלמה. לחץ למחיקת הגרסה הישנה — ההתקנה תמשיך אוטומטית מיד אחרי שתאשר את המחיקה.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Button(onClick = { onUninstall(status.source.packageName) }) {
+                        Text("מחק את הגרסה הישנה")
+                    }
+                }
             } else {
                 if (status.signatureMismatch && status.remote != null) {
                     Text(
