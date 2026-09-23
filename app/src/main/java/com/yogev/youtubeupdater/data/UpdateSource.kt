@@ -1,5 +1,7 @@
 package com.yogev.youtubeupdater.data
 
+import android.os.Build
+
 /**
  * A monitored app: where its releases live on GitHub, how to recognise the right
  * APK asset, and which installed package it maps to on the device.
@@ -50,6 +52,27 @@ object Sources {
         expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
     )
 
+    /**
+     * YouTube Music Morphe. Same rotating-release repo as YouTube Morphe, but
+     * this app ships one APK per CPU architecture (no universal "-all" build) —
+     * pick the variant matching the device.
+     */
+    private val musicAbiToken: String =
+        if (Build.SUPPORTED_ABIS.contains("arm64-v8a")) "arm64-v8a" else "arm-v7a"
+
+    val MUSIC = UpdateSource(
+        key = "music",
+        displayName = "YouTube Music Morphe",
+        packageName = "app.morphe.android.apps.youtube.music",
+        owner = "j-hc",
+        repo = "revanced-magisk-module",
+        assetPattern = Regex("""^music-morphe-v(.+)-$musicAbiToken\.apk$"""),
+        mode = UpdateSource.Mode.SCAN,
+        scanPages = 3,
+        perPage = 30,
+        expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
+    )
+
     /** MicroG RE — clean tag-per-version releases; the universal APK. */
     val MICROG = UpdateSource(
         key = "microg",
@@ -79,7 +102,7 @@ object Sources {
         mode = UpdateSource.Mode.LATEST,
     )
 
-    val ALL = listOf(YOUTUBE, MICROG, SELF)
+    val ALL = listOf(YOUTUBE, MUSIC, MICROG, SELF)
 
     fun byKey(key: String): UpdateSource? = ALL.firstOrNull { it.key == key }
 }

@@ -11,6 +11,7 @@
          of the apps we manage via PackageManager.getPackageInfo(). -->
     <queries>
         <package android:name="app.morphe.android.youtube" />
+        <package android:name="app.morphe.android.apps.youtube.music" />
         <package android:name="app.revanced.android.gms" />
         <!-- Legacy / non-RE microG variants we offer to remove before installing RE. -->
         <package android:name="com.mgoogle.android.gms" />
