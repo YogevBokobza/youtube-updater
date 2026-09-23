@@ -98,13 +98,29 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
     }
 
     fun uninstall(packageName: String) {
+        val uri = Uri.fromParts("package", packageName, null)
+        // Prefer the direct uninstall confirmation; fall back to the App Info
+        // screen (always present on every Android device/OEM) if it doesn't
+        // resolve to anything on this device.
+        val candidates = listOf(
+            Intent(Intent.ACTION_DELETE, uri),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri),
+        )
+        val pm = context.packageManager
+        val intent = candidates.firstOrNull { it.resolveActivity(pm) != null } ?: candidates.last()
         try {
-            val intent = Intent(Intent.ACTION_DELETE, Uri.parse("package:$packageName"))
             context.startActivity(intent)
+            if (intent.action == Settings.ACTION_APPLICATION_DETAILS_SETTINGS) {
+                android.widget.Toast.makeText(
+                    context,
+                    "פתחתי את פרטי האפליקציה — לחץ \"הסר התקנה\" שם",
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
+            }
         } catch (e: Exception) {
             android.widget.Toast.makeText(
                 context,
-                "לא ניתן לפתוח מסך הסרה: ${e.message}",
+                "לא ניתן לפתוח מסך הסרה עבור $packageName: ${e.message}",
                 android.widget.Toast.LENGTH_LONG,
             ).show()
         }
