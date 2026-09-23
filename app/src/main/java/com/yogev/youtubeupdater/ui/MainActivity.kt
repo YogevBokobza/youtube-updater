@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -101,6 +102,16 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
         context.startActivity(intent)
     }
 
+    // The ViewModel sets this once a signature-mismatch replace has downloaded
+    // the new build and needs the old (wrongly-signed) one removed first.
+    LaunchedEffect(state.pendingUninstallPackage) {
+        val pkg = state.pendingUninstallPackage
+        if (pkg != null) {
+            uninstall(pkg)
+            viewModel.consumePendingUninstall()
+        }
+    }
+
     // Refresh installed/available state whenever the screen returns to foreground
     // (e.g. after an install or uninstall completes).
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -146,6 +157,7 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
                     AppCard(
                         status = status,
                         busy = state.busyKey == status.source.key,
+                        replacing = state.replacingKey == status.source.key,
                         progress = state.progress,
                         onUpdate = { startUpdate(status) },
                         onUninstall = { uninstall(it) },
@@ -170,6 +182,7 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
 private fun AppCard(
     status: AppStatus,
     busy: Boolean,
+    replacing: Boolean,
     progress: Float,
     onUpdate: () -> Unit,
     onUninstall: (String) -> Unit,
@@ -214,13 +227,29 @@ private fun AppCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text("מוריד… ${(progress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
+            } else if (replacing) {
+                Text(
+                    "הורד הושלם — אשר את מחיקת הגרסה הישנה במכשיר; ההתקנה תמשיך אוטומטית.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             } else {
+                if (status.signatureMismatch && status.remote != null) {
+                    Text(
+                        "הגרסה המותקנת חתומה אחרת מהבילד הרשמי — נדרשת מחיקה והתקנה מחדש.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                }
                 Row(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     when {
+                        status.signatureMismatch && status.remote != null ->
+                            Button(onClick = onUpdate) { Text("מחק והתקן") }
                         status.updateAvailable -> Button(onClick = onUpdate) {
                             Text(if (status.isInstalled) "עדכן" else "התקן")
                         }

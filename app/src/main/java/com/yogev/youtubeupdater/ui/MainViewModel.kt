@@ -24,11 +24,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val progress: Float = 0f,
         val token: String = "",
         val includePrereleases: Boolean = false,
+        /** Set once to tell the UI to fire a system uninstall prompt for this package. */
+        val pendingUninstallPackage: String? = null,
+        /** Source key currently mid "download → uninstall → auto-install" replace flow. */
+        val replacingKey: String? = null,
     )
 
     private val repo = UpdateRepository(app)
     private val prefs = Prefs(app)
     private val downloader = Downloader(app)
+
+    // Mirrors state.replacingKey; used by refresh() to notice the uninstall completed.
+    private var pendingReplaceKey: String? = null
 
     private val _state = MutableStateFlow(
         UiState(
@@ -50,11 +57,32 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             _state.update { it.copy(loading = true, error = null) }
             val items = repo.loadStatuses(force)
             _state.update { it.copy(items = items, loading = false) }
+
+            // If we're waiting for the user to confirm an uninstall (as part of a
+            // signature-mismatch replace), and the package is now gone, finish the job.
+            val key = pendingReplaceKey
+            if (key != null) {
+                val status = items.firstOrNull { it.source.key == key }
+                if (status != null && !status.isInstalled) {
+                    pendingReplaceKey = null
+                    _state.update { it.copy(replacingKey = null) }
+                    performInstall(status)
+                }
+            }
         }
     }
 
-    /** Download the matching APK and hand it to the system installer. */
+    /** Download (if needed) and install/update — routes through [replaceApp] first
+     *  when the installed build has the wrong signature. */
     fun updateApp(status: AppStatus) {
+        if (status.signatureMismatch) replaceApp(status) else performInstall(status)
+    }
+
+    fun consumePendingUninstall() {
+        _state.update { it.copy(pendingUninstallPackage = null) }
+    }
+
+    private fun performInstall(status: AppStatus) {
         val remote = status.remote ?: return
         if (_state.value.busyKey != null) return
         viewModelScope.launch {
@@ -66,6 +94,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 ApkInstaller.install(getApplication(), apk, status.source.displayName)
             } catch (e: Exception) {
                 _state.update { it.copy(error = e.message ?: "שגיאה בהתקנה") }
+            } finally {
+                _state.update { it.copy(busyKey = null, progress = 0f) }
+            }
+        }
+    }
+
+    /** Downloads the new build, then asks the UI to prompt an uninstall of the
+     *  wrongly-signed installed one; [refresh] auto-installs once it's gone. */
+    private fun replaceApp(status: AppStatus) {
+        val remote = status.remote ?: return
+        if (_state.value.busyKey != null) return
+        viewModelScope.launch {
+            _state.update {
+                it.copy(busyKey = status.source.key, progress = 0f, error = null, replacingKey = status.source.key)
+            }
+            try {
+                downloader.download(remote) { p -> _state.update { it.copy(progress = p) } }
+                pendingReplaceKey = status.source.key
+                _state.update { it.copy(pendingUninstallPackage = status.source.packageName) }
+            } catch (e: Exception) {
+                _state.update { it.copy(error = e.message ?: "שגיאה בהורדה", replacingKey = null) }
             } finally {
                 _state.update { it.copy(busyKey = null, progress = 0f) }
             }

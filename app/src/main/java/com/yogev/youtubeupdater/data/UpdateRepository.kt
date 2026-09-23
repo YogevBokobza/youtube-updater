@@ -32,16 +32,22 @@ class UpdateRepository(private val context: Context) {
         val conflicts = source.conflictingPackages.mapNotNull { pkg ->
             InstalledApps.label(context, pkg)?.let { ConflictPackage(pkg, it) }
         }
+        val mismatch = installed != null &&
+            source.expectedSignerSha256 != null &&
+            run {
+                val installedHashes = SignatureCheck.installedSignerHashes(context, source.packageName)
+                installedHashes != null && source.expectedSignerSha256.lowercase() !in installedHashes
+            }
         val cached = prefs.cachedRemote(source.key)
 
         if (!fetchRemote) {
-            return AppStatus(source, installed?.versionName, cached, conflicts = conflicts)
+            return AppStatus(source, installed?.versionName, cached, conflicts = conflicts, signatureMismatch = mismatch)
         }
 
         return try {
             val remote = client().resolve(source, prefs.includePrereleases)
             if (remote != null) prefs.setCachedRemote(source.key, remote)
-            AppStatus(source, installed?.versionName, remote ?: cached, conflicts = conflicts)
+            AppStatus(source, installed?.versionName, remote ?: cached, conflicts = conflicts, signatureMismatch = mismatch)
         } catch (e: Exception) {
             // Keep showing the last known remote version, with a friendly error.
             AppStatus(
@@ -50,6 +56,7 @@ class UpdateRepository(private val context: Context) {
                 remote = cached,
                 error = friendlyError(e),
                 conflicts = conflicts,
+                signatureMismatch = mismatch,
             )
         }
     }

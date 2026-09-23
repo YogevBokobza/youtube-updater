@@ -13,6 +13,9 @@ data class AppStatus(
     val remote: RemoteRelease?,
     val error: String? = null,
     val conflicts: List<ConflictPackage> = emptyList(),
+    /** Installed build is signed differently than the official one — a plain
+     *  update will fail silently; needs uninstall-then-install instead. */
+    val signatureMismatch: Boolean = false,
 ) {
     val isInstalled: Boolean get() = installedVersion != null
 

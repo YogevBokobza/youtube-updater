@@ -17,6 +17,13 @@ data class UpdateSource(
     val perPage: Int = 30,
     /** Other (non-RE) variants of this app to offer removing before install. */
     val conflictingPackages: List<String> = emptyList(),
+    /**
+     * SHA-256 of the official build's signing certificate. When the installed
+     * app at [packageName] is signed differently (e.g. a pre-RE legacy build
+     * that happens to share the same package name), a plain update would fail
+     * silently — we detect it and require uninstall-then-install instead.
+     */
+    val expectedSignerSha256: String? = null,
 ) {
     enum class Mode { LATEST, SCAN }
 }
@@ -40,6 +47,7 @@ object Sources {
         mode = UpdateSource.Mode.SCAN,
         scanPages = 3,
         perPage = 30,
+        expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
     )
 
     /** MicroG RE — clean tag-per-version releases; the universal APK. */
@@ -55,6 +63,9 @@ object Sources {
             "com.mgoogle.android.gms", // Vanced microG
             "org.microg.gms",          // standard microG
         ),
+        // Legacy ReVanced GmsCore builds used this exact package name with a
+        // different signer (versions look like "0.2.x.yymmdd" / "0.3.x.yymmdd").
+        expectedSignerSha256 = "0b6c9515afb195fac59601696ba0a7907a0b217ccf720b43148427ccf64343e7",
     )
 
     /** The updater itself — enables in-app self-update from its own releases. */
