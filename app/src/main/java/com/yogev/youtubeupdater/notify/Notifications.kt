@@ -9,6 +9,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.yogev.youtubeupdater.R
 import com.yogev.youtubeupdater.data.AppStatus
+import com.yogev.youtubeupdater.install.PlayProtect
 import com.yogev.youtubeupdater.ui.MainActivity
 
 object Notifications {
@@ -66,6 +67,32 @@ object Notifications {
             .setAutoCancel(true)
             .build()
         notify(context, ("result_$label").hashCode(), notification)
+    }
+
+    /** Install was blocked by Play Protect; tapping jumps to the setting to disable it. */
+    fun playProtectBlocked(context: Context, label: String) {
+        ensureChannel(context)
+        val settings = PlayProtect.settingsIntent(context)
+        val pending = settings?.let {
+            PendingIntent.getActivity(
+                context,
+                "pp".hashCode(),
+                it,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
+        val builder = NotificationCompat.Builder(context, CHANNEL)
+            .setSmallIcon(android.R.drawable.stat_notify_error)
+            .setContentTitle("$label נחסם ע\"י Play Protect")
+            .setContentText("הקש כדי לפתוח את הגדרות Play Protect ולכבות את הסריקה, ואז נסה שוב.")
+            .setStyle(
+                NotificationCompat.BigTextStyle().bigText(
+                    "$label נחסם ע\"י Google Play Protect. הקש כדי לפתוח את ההגדרה, כבה \"סרוק אפליקציות באמצעות Play Protect\", וחזור לאפליקציה כדי להתקין שוב."
+                )
+            )
+            .setAutoCancel(true)
+        if (pending != null) builder.setContentIntent(pending)
+        notify(context, ("blocked_$label").hashCode(), builder.build())
     }
 
     private fun notify(context: Context, id: Int, notification: android.app.Notification) {

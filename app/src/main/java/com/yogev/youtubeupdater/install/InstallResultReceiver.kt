@@ -36,6 +36,11 @@ class InstallResultReceiver : BroadcastReceiver() {
                 // user cancelled — stay quiet
             }
 
+            PackageInstaller.STATUS_FAILURE_BLOCKED -> {
+                // Blocked by Play Protect (or a device policy) — guide the user to the setting.
+                Notifications.playProtectBlocked(context, label)
+            }
+
             else -> {
                 val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
                 Notifications.installResult(context, label, success = false, message = message)

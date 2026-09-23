@@ -26,6 +26,7 @@ fun SettingsDialog(
     includePrereleases: Boolean,
     onToken: (String) -> Unit,
     onPrerelease: (Boolean) -> Unit,
+    onOpenPlayProtect: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var tokenField by remember { mutableStateOf(token) }
@@ -61,6 +62,16 @@ fun SettingsDialog(
                     "בדיקת עדכונים אוטומטית: כל 6 שעות",
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                 )
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "אם ההתקנה נחסמת ע\"י Play Protect (קורה בעיקר ל-MicroG):",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(4.dp))
+                androidx.compose.material3.OutlinedButton(
+                    onClick = onOpenPlayProtect,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("פתח הגדרות Play Protect") }
             }
         },
         confirmButton = {

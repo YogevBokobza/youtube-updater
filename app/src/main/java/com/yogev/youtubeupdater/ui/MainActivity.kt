@@ -197,6 +197,15 @@ private fun UpdaterScreen(viewModel: MainViewModel) {
             includePrereleases = state.includePrereleases,
             onToken = viewModel::setToken,
             onPrerelease = viewModel::setIncludePrereleases,
+            onOpenPlayProtect = {
+                if (!com.yogev.youtubeupdater.install.PlayProtect.openSettings(context)) {
+                    android.widget.Toast.makeText(
+                        context,
+                        "לא נמצאו הגדרות Play Protect במכשיר",
+                        android.widget.Toast.LENGTH_LONG,
+                    ).show()
+                }
+            },
             onDismiss = { showSettings = false },
         )
     }
