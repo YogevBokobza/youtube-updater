@@ -10,12 +10,19 @@ import java.io.IOException
 /**
  * Reads GitHub Releases. Unauthenticated is fine (60 req/h); an optional token
  * raises the limit and is used when provided.
+ *
+ * Create one instance per refresh cycle: [pageCache] collapses repeated reads of
+ * the same releases page, which is what keeps the two sources that share the
+ * j-hc repo from fetching the identical pages twice.
  */
 class GitHubClient(
     private val client: OkHttpClient,
     private val token: String? = null,
 ) {
     private val json = Json { ignoreUnknownKeys = true }
+
+    /** Releases already fetched in this cycle, keyed by URL. */
+    private val pageCache = mutableMapOf<String, List<GhRelease>>()
 
     /** Resolve the newest matching APK for a source, or null if none found. */
     suspend fun resolve(source: UpdateSource, includePrereleases: Boolean): RemoteRelease? =
@@ -71,7 +78,11 @@ class GitHubClient(
 
     /** GET a releases URL; returns a list (the /latest endpoint returns one object,
      *  which we wrap by requesting it as a single-element parse). */
-    private fun getReleases(url: String): List<GhRelease> {
+    private fun getReleases(url: String): List<GhRelease> = pageCache.getOrPut(url) {
+        fetchReleases(url)
+    }
+
+    private fun fetchReleases(url: String): List<GhRelease> {
         val body = get(url) ?: return emptyList()
         val trimmed = body.trimStart()
         return if (trimmed.startsWith("[")) {

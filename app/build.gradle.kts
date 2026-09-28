@@ -43,13 +43,10 @@ android {
         versionName = appVersionName
         vectorDrawables { useSupportLibrary = true }
 
-        // Optional embedded read-only GitHub token to raise the API rate limit.
-        // Provided at build time via -PgithubToken=... or the GITHUB_DEFAULT_TOKEN
-        // env var; never committed. A token set in-app Settings takes precedence.
-        val embeddedToken = (project.findProperty("githubToken") as String?)
-            ?: System.getenv("EMBEDDED_GH_TOKEN")
-            ?: ""
-        buildConfigField("String", "DEFAULT_GITHUB_TOKEN", "\"$embeddedToken\"")
+        // No GitHub token is embedded here. A token compiled into a published APK
+        // is extractable by anyone who downloads it, and the app stays well under
+        // the unauthenticated 60/h limit thanks to ETag revalidation (see Http.kt).
+        // Users who want the higher limit can set their own token in Settings.
     }
 
     signingConfigs {
