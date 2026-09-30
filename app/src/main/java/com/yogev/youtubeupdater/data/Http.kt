@@ -24,9 +24,11 @@ object Http {
     /**
      * Client for the GitHub API, backed by a disk cache. The cache lets OkHttp
      * replay the stored `ETag` as `If-None-Match`, so an unchanged release list
-     * comes back as `304 Not Modified` — and a 304 does not count against
-     * GitHub's rate limit. Polling every few hours therefore costs us almost
-     * nothing even unauthenticated. Shares the connection pool with [client].
+     * comes back as `304 Not Modified`. Note: GitHub only exempts a 304 from
+     * its rate limit when the conditional request carries an Authorization
+     * header; unauthenticated polls still count against the 60/h limit, so the
+     * fetch interval in [UpdateRepository] is what keeps us under it. Shares
+     * the connection pool with [client].
      */
     fun api(context: Context): OkHttpClient =
         apiClient ?: synchronized(this) {

@@ -44,8 +44,9 @@ android {
         vectorDrawables { useSupportLibrary = true }
 
         // No GitHub token is embedded here. A token compiled into a published APK
-        // is extractable by anyone who downloads it, and the app stays well under
-        // the unauthenticated 60/h limit thanks to ETag revalidation (see Http.kt).
+        // is extractable by anyone who downloads it. The app stays well under the
+        // unauthenticated 60/h limit by throttling fetches (see UpdateRepository);
+        // 304s only spare the rate limit for authenticated requests (see Http.kt).
         // Users who want the higher limit can set their own token in Settings.
     }
 
