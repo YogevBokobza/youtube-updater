@@ -1,19 +1,14 @@
 package com.yogev.youtubeupdater.data
 
 import android.content.Context
-import com.yogev.youtubeupdater.BuildConfig
 
 /** Coordinates GitHub lookups with the device's installed versions. */
 class UpdateRepository(private val context: Context) {
 
     private val prefs = Prefs(context)
 
-    private fun client(): GitHubClient {
-        // In-app token wins; otherwise fall back to the embedded build-time token.
-        val token = prefs.token
-            ?: BuildConfig.DEFAULT_GITHUB_TOKEN.takeIf { it.isNotBlank() }
-        return GitHubClient(Http.client, token)
-    }
+    /** Only the user's own token from Settings — nothing is embedded in the build. */
+    private fun client(): GitHubClient = GitHubClient(Http.api(context), prefs.token)
 
     /**
      * Loads statuses. Network is hit only when [force] is set or the cache is
@@ -24,10 +19,17 @@ class UpdateRepository(private val context: Context) {
         val stale = System.currentTimeMillis() - prefs.lastFetch > MIN_FETCH_INTERVAL_MS
         val fetch = force || stale
         if (fetch) prefs.lastFetch = System.currentTimeMillis()
-        return Sources.ALL.map { status(it, fetch) }
+        // One client for the whole cycle so its page cache is shared across
+        // sources; YouTube and YouTube Music scan the same j-hc release pages.
+        val client = client()
+        return Sources.ALL.map { status(it, fetch, client) }
     }
 
-    private suspend fun status(source: UpdateSource, fetchRemote: Boolean): AppStatus {
+    private suspend fun status(
+        source: UpdateSource,
+        fetchRemote: Boolean,
+        client: GitHubClient,
+    ): AppStatus {
         val installed = InstalledApps.get(context, source.packageName)
         val conflicts = source.conflictingPackages.mapNotNull { pkg ->
             InstalledApps.label(context, pkg)?.let { ConflictPackage(pkg, it) }
@@ -45,7 +47,7 @@ class UpdateRepository(private val context: Context) {
         }
 
         return try {
-            val remote = client().resolve(source, prefs.includePrereleases)
+            val remote = client.resolve(source, prefs.includePrereleases)
             if (remote != null) prefs.setCachedRemote(source.key, remote)
             AppStatus(source, installed?.versionName, remote ?: cached, conflicts = conflicts, signatureMismatch = mismatch)
         } catch (e: Exception) {
