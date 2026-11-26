@@ -28,8 +28,6 @@ data class UpdateSource(
     val expectedSignerSha256: String? = null,
     /** Patch bundle repo named in the release notes, used to show its version. */
     val patchesRepo: String? = null,
-    /** Private GitHub repo: reading releases and downloading need a token. */
-    val privateRepo: Boolean = false,
 ) {
     enum class Mode { LATEST, SCAN }
 }
@@ -86,8 +84,7 @@ object Sources {
      * the patch bundle, so our own builder repo (a j-hc builder fork) patches
      * Gboard in CI and releases the APK. Its default "Package Rename" patch
      * gives it its own package, so it installs next to the stock Gboard.
-     * Builds are arm64-v8a only: the patches support no other ABI. The builder
-     * repo is private, so this source needs a GitHub token in Settings.
+     * Builds are arm64-v8a only: the patches support no other ABI.
      */
     val GBOARD = UpdateSource(
         key = "gboard",
@@ -100,7 +97,6 @@ object Sources {
         // The builder signs with the same j-hc key as the Morphe builds.
         expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
         patchesRepo = "jasonwu1994/Gboard-patches",
-        privateRepo = true,
     )
 
     /** MicroG RE — clean tag-per-version releases; the universal APK. */

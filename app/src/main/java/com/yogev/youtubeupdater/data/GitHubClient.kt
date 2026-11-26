@@ -79,8 +79,6 @@ class GitHubClient(
                         htmlUrl = release.htmlUrl,
                         publishedAt = release.publishedAt,
                         patchesVersion = patchesVersion(source, release.body),
-                        apiUrl = asset.apiUrl,
-                        requiresAuth = source.privateRepo,
                     )
                 }
             }
