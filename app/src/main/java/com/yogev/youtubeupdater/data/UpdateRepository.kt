@@ -42,18 +42,6 @@ class UpdateRepository(private val context: Context) {
             }
         val cached = prefs.cachedRemote(source.key)
 
-        if (source.privateRepo && prefs.token == null) {
-            return AppStatus(
-                source,
-                installed?.versionName,
-                remote = null,
-                error = "ריפו פרטי: הוסף GitHub Token בהגדרות עם הרשאת קריאה ל-${source.owner}/${source.repo}.",
-                conflicts = conflicts,
-                signatureMismatch = mismatch,
-                installedAt = installed?.lastUpdateTime,
-            )
-        }
-
         if (!fetchRemote) {
             return AppStatus(source, installed?.versionName, cached, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
         }
@@ -61,13 +49,7 @@ class UpdateRepository(private val context: Context) {
         return try {
             val remote = client.resolve(source, prefs.includePrereleases)
             if (remote != null) prefs.setCachedRemote(source.key, remote)
-            // GitHub answers 404 for a private repo the token can't read.
-            val error = if (remote == null && source.privateRepo) {
-                "לא נמצא release ב-${source.owner}/${source.repo}. בדוק שלטוקן יש גישת קריאה לריפו."
-            } else {
-                null
-            }
-            AppStatus(source, installed?.versionName, remote ?: cached, error = error, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
+            AppStatus(source, installed?.versionName, remote ?: cached, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
         } catch (e: Exception) {
             // Keep showing the last known remote version, with a friendly error.
             AppStatus(

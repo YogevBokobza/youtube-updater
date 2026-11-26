@@ -22,8 +22,6 @@ data class GhAsset(
     /** e.g. "sha256:abcd…" — may be absent on older assets. */
     val digest: String? = null,
     @SerialName("browser_download_url") val browserDownloadUrl: String,
-    /** API URL of the asset; the only download URL that works for a private repo. */
-    @SerialName("url") val apiUrl: String? = null,
 )
 
 /** A resolved candidate: the newest matching APK for a source. */
@@ -40,10 +38,6 @@ data class RemoteRelease(
     val publishedAt: String? = null,
     /** Patch bundle version from the release notes (e.g. "2.4.0"), if listed. */
     val patchesVersion: String? = null,
-    /** API URL of the asset, used with a token when the repo is private. */
-    val apiUrl: String? = null,
-    /** From a private repo: download through [apiUrl] with the user's token. */
-    val requiresAuth: Boolean = false,
 ) {
     /** [publishedAt] as epoch millis, or null when absent/unparseable. */
     val publishedMillis: Long?

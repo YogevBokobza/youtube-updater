@@ -45,8 +45,7 @@ fun SettingsDialog(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "מעלה את מגבלת הבקשות ל-GitHub. חובה ל-Gboard Patches (ריפו פרטי): " +
-                        "Fine-grained token עם Contents: Read-only לריפו gboard-morphe-builder.",
+                    "מעלה את מגבלת הבקשות ל-GitHub. לא חובה.",
                     style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
                 )
                 Spacer(Modifier.height(16.dp))
