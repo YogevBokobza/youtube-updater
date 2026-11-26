@@ -42,14 +42,26 @@ class UpdateRepository(private val context: Context) {
             }
         val cached = prefs.cachedRemote(source.key)
 
-        if (!fetchRemote) {
+        // A source with nothing cached (just added, or never resolved) is fetched
+        // even inside the interval, so a new card doesn't sit empty for up to
+        // 15 minutes. Once per process, so a source with no matching asset
+        // doesn't spend a request on every screen resume.
+        val firstLook = cached == null && triedUncached.add(source.key)
+        if (!fetchRemote && !firstLook) {
             return AppStatus(source, installed?.versionName, cached, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
         }
 
         return try {
             val remote = client.resolve(source, prefs.includePrereleases)
             if (remote != null) prefs.setCachedRemote(source.key, remote)
-            AppStatus(source, installed?.versionName, remote ?: cached, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
+            // Say so instead of showing a bare "—": no release (or 404), or no
+            // asset matching the source's pattern.
+            val error = if (remote == null && cached == null) {
+                "לא נמצא APK מתאים ב-${source.owner}/${source.repo}"
+            } else {
+                null
+            }
+            AppStatus(source, installed?.versionName, remote ?: cached, error = error, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
         } catch (e: Exception) {
             // Keep showing the last known remote version, with a friendly error.
             AppStatus(
@@ -74,6 +86,10 @@ class UpdateRepository(private val context: Context) {
     }
 
     companion object {
+        /** Sources already fetched once in this process while uncached. */
+        private val triedUncached: MutableSet<String> =
+            java.util.Collections.synchronizedSet(mutableSetOf())
+
         private const val MIN_FETCH_INTERVAL_MS = 15 * 60 * 1000L // 15 minutes
     }
 }
