@@ -229,9 +229,17 @@ private fun AppCard(
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(
-                text = "זמין: " + (status.remote?.version ?: "—"),
+                text = "זמין: " + (status.remote?.version ?: "—") +
+                    (status.remote?.patchesVersion?.let { " · patches $it" } ?: ""),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            if (status.newerBuild) {
+                Text(
+                    "בילד חדש לאותה גרסה (עדכון patches)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
             status.error?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it, color = MaterialTheme.colorScheme.error, maxLines = 2, overflow = TextOverflow.Ellipsis)

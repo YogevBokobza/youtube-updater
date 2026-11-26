@@ -1,6 +1,10 @@
 package com.yogev.youtubeupdater.ui
 
 import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.yogev.youtubeupdater.data.AppStatus
@@ -45,18 +49,56 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     )
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    // A refresh requested while one is running; replayed when it finishes so a
+    // package change that lands mid-refresh isn't lost.
+    private var rerun = false
+    private var rerunForce = false
+
+    /**
+     * The screen refreshes on resume, but the install dialog closes before the
+     * package manager finishes installing, so that refresh still sees the old
+     * version. Listening for the package broadcasts updates the card the moment
+     * the install, update or uninstall actually lands.
+     */
+    private val packageReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            refresh()
+        }
+    }
+
     init {
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+        }
+        app.registerReceiver(packageReceiver, filter)
         refresh()
+    }
+
+    override fun onCleared() {
+        getApplication<Application>().unregisterReceiver(packageReceiver)
     }
 
     /** [force] = true hits GitHub now (the refresh button); false uses the cache
      *  unless it is stale, so returning to the screen doesn't spend rate limit. */
     fun refresh(force: Boolean = false) {
-        if (_state.value.loading) return
+        if (_state.value.loading) {
+            rerun = true
+            rerunForce = rerunForce || force
+            return
+        }
         viewModelScope.launch {
             _state.update { it.copy(loading = true, error = null) }
             val items = repo.loadStatuses(force)
             _state.update { it.copy(items = items, loading = false) }
+            if (rerun) {
+                val again = rerunForce
+                rerun = false
+                rerunForce = false
+                refresh(again)
+            }
 
             // If we're waiting for the user to confirm an uninstall (as part of a
             // signature-mismatch replace), and the package is now gone, finish the job.

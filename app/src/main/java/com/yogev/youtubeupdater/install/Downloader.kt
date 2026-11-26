@@ -2,6 +2,7 @@ package com.yogev.youtubeupdater.install
 
 import android.content.Context
 import com.yogev.youtubeupdater.data.Http
+import com.yogev.youtubeupdater.data.Prefs
 import com.yogev.youtubeupdater.data.RemoteRelease
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -26,7 +27,7 @@ class Downloader(private val context: Context) {
                 return@withContext target
             }
 
-            val request = Request.Builder().url(remote.downloadUrl).build()
+            val request = request(remote)
             Http.client.newCall(request).execute().use { resp ->
                 if (!resp.isSuccessful) throw IOException("הורדה נכשלה (${resp.code})")
                 val body = resp.body ?: throw IOException("תשובה ריקה")
@@ -60,6 +61,28 @@ class Downloader(private val context: Context) {
             }
             target
         }
+
+    /**
+     * A private repo's browser URL needs a session cookie, so download through
+     * the asset's API URL with the token instead. GitHub answers with a
+     * redirect to its storage host; OkHttp drops the Authorization header on
+     * that cross-host redirect, which is what the storage host expects.
+     */
+    private fun request(remote: RemoteRelease): Request {
+        val token = Prefs(context).token
+        val apiUrl = remote.apiUrl
+        if (!remote.requiresAuth || apiUrl == null) {
+            return Request.Builder().url(remote.downloadUrl).build()
+        }
+        if (token == null) throw IOException("ריפו פרטי: הוסף GitHub Token בהגדרות")
+        return Request.Builder()
+            .url(apiUrl)
+            .header("Accept", "application/octet-stream")
+            .header("Authorization", "Bearer $token")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .header("User-Agent", "youtube-updater")
+            .build()
+    }
 
     /** A previously downloaded file counts as valid if its SHA-256 (when known)
      *  or size matches — so we install instead of re-downloading. */

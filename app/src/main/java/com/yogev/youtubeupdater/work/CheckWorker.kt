@@ -19,10 +19,12 @@ class CheckWorker(
         return try {
             for (status in repo.loadStatuses(force = true)) {
                 if (!status.updateAvailable) continue
-                val version = status.remote?.version ?: continue
-                if (prefs.lastNotifiedVersion(status.source.key) != version) {
+                // Build id, not just the version: a same-version rebuild with
+                // newer patches must notify too.
+                val build = status.remote?.buildId ?: continue
+                if (prefs.lastNotifiedVersion(status.source.key) != build) {
                     Notifications.updateAvailable(applicationContext, status)
-                    prefs.setLastNotifiedVersion(status.source.key, version)
+                    prefs.setLastNotifiedVersion(status.source.key, build)
                 }
             }
             Result.success()

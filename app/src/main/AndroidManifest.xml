@@ -13,6 +13,8 @@
         <package android:name="app.morphe.android.youtube" />
         <package android:name="app.morphe.android.apps.youtube.music" />
         <package android:name="app.revanced.android.gms" />
+        <!-- Gboard Patches, renamed by its "Package Rename" patch. -->
+        <package android:name="dev.jason.com.google.android.inputmethod.latin" />
         <!-- Legacy / non-RE microG variants we offer to remove before installing RE. -->
         <package android:name="com.mgoogle.android.gms" />
         <package android:name="org.microg.gms" />

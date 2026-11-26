@@ -46,7 +46,10 @@ object Notifications {
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle(context.getString(R.string.update_available_title))
-            .setContentText("${status.source.displayName} ${remote.version}")
+            .setContentText(
+                "${status.source.displayName} ${remote.version}" +
+                    (remote.patchesVersion?.let { " (patches $it)" } ?: ""),
+            )
             .setAutoCancel(true)
             .setContentIntent(pending)
             .build()
