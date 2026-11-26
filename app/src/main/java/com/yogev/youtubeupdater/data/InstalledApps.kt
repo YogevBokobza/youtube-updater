@@ -6,7 +6,7 @@ import android.os.Build
 
 object InstalledApps {
 
-    data class Installed(val versionName: String?, val versionCode: Long)
+    data class Installed(val versionName: String?, val versionCode: Long, val lastUpdateTime: Long)
 
     fun get(context: Context, packageName: String): Installed? = try {
         val pm = context.packageManager
@@ -22,7 +22,7 @@ object InstalledApps {
             @Suppress("DEPRECATION")
             info.versionCode.toLong()
         }
-        Installed(info.versionName, code)
+        Installed(info.versionName, code, info.lastUpdateTime)
     } catch (e: PackageManager.NameNotFoundException) {
         null
     }

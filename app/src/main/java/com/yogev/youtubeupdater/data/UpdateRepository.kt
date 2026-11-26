@@ -13,7 +13,7 @@ class UpdateRepository(private val context: Context) {
     /**
      * Loads statuses. Network is hit only when [force] is set or the cache is
      * older than [MIN_FETCH_INTERVAL_MS] — this keeps us well under GitHub's
-     * unauthenticated rate limit (60/h) despite frequent screen resumes.
+     * unauthenticated rate limit (60/h) despite frequent screen resumes: one cycle is about 5 requests.
      */
     suspend fun loadStatuses(force: Boolean): List<AppStatus> {
         val stale = System.currentTimeMillis() - prefs.lastFetch > MIN_FETCH_INTERVAL_MS
@@ -42,14 +42,32 @@ class UpdateRepository(private val context: Context) {
             }
         val cached = prefs.cachedRemote(source.key)
 
+        if (source.privateRepo && prefs.token == null) {
+            return AppStatus(
+                source,
+                installed?.versionName,
+                remote = null,
+                error = "ריפו פרטי: הוסף GitHub Token בהגדרות עם הרשאת קריאה ל-${source.owner}/${source.repo}.",
+                conflicts = conflicts,
+                signatureMismatch = mismatch,
+                installedAt = installed?.lastUpdateTime,
+            )
+        }
+
         if (!fetchRemote) {
-            return AppStatus(source, installed?.versionName, cached, conflicts = conflicts, signatureMismatch = mismatch)
+            return AppStatus(source, installed?.versionName, cached, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
         }
 
         return try {
             val remote = client.resolve(source, prefs.includePrereleases)
             if (remote != null) prefs.setCachedRemote(source.key, remote)
-            AppStatus(source, installed?.versionName, remote ?: cached, conflicts = conflicts, signatureMismatch = mismatch)
+            // GitHub answers 404 for a private repo the token can't read.
+            val error = if (remote == null && source.privateRepo) {
+                "לא נמצא release ב-${source.owner}/${source.repo}. בדוק שלטוקן יש גישת קריאה לריפו."
+            } else {
+                null
+            }
+            AppStatus(source, installed?.versionName, remote ?: cached, error = error, conflicts = conflicts, signatureMismatch = mismatch, installedAt = installed?.lastUpdateTime)
         } catch (e: Exception) {
             // Keep showing the last known remote version, with a friendly error.
             AppStatus(
@@ -59,6 +77,7 @@ class UpdateRepository(private val context: Context) {
                 error = friendlyError(e),
                 conflicts = conflicts,
                 signatureMismatch = mismatch,
+                installedAt = installed?.lastUpdateTime,
             )
         }
     }
@@ -73,6 +92,6 @@ class UpdateRepository(private val context: Context) {
     }
 
     companion object {
-        private const val MIN_FETCH_INTERVAL_MS = 30 * 60 * 1000L // 30 minutes
+        private const val MIN_FETCH_INTERVAL_MS = 15 * 60 * 1000L // 15 minutes
     }
 }

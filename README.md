@@ -16,7 +16,16 @@
 | אפליקציה | מאגר | Asset |
 |----------|------|-------|
 | YouTube Morphe | `j-hc/revanced-magisk-module` (סריקת releases) | `youtube-morphe-v<ver>-all.apk` |
+| YouTube Music Morphe | `j-hc/revanced-magisk-module` (סריקת releases) | `music-morphe-v<ver>-<abi>.apk` |
 | MicroG RE | `MorpheApp/MicroG-RE` (`releases/latest`) | `microg-<ver>.apk` |
+| Gboard Patches | `YogevBokobza/gboard-morphe-builder` (פרטי, `releases/latest`) | `gboard-patches-v<ver>-arm64-v8a.apk` |
+
+כש-j-hc בונה מחדש את אותה גרסת אפליקציה עם patches חדשים, האפליקציה מזהה את זה
+לפי תאריך ה-release מול זמן ההתקנה, ומציגה "בילד חדש לאותה גרסה".
+
+Gboard Patches נבנה ב-[gboard-morphe-builder](https://github.com/YogevBokobza/gboard-morphe-builder)
+מה-patches של [jasonwu1994/Gboard-patches](https://github.com/jasonwu1994/Gboard-patches).
+הריפו פרטי, ולכן צריך GitHub Token בהגדרות (ראה למטה). arm64-v8a בלבד.
 
 מוגדרים ב-`app/src/main/java/com/yogev/youtubeupdater/data/UpdateSource.kt`.
 
@@ -72,7 +81,9 @@
 
 ## הגדרות (בתוך האפליקציה)
 
-- **GitHub Token** (אופציונלי) — מעלה את מגבלת הבקשות ל-GitHub (60/שעה ללא token).
+- **GitHub Token** — מעלה את מגבלת הבקשות ל-GitHub (60/שעה ללא token). חובה ל-Gboard
+  Patches: Fine-grained token עם גישה רק ל-`gboard-morphe-builder` והרשאת
+  **Contents: Read-only**.
 - **כלול pre-release** — כבוי כברירת מחדל.
 
 ## מגבלות ידועות

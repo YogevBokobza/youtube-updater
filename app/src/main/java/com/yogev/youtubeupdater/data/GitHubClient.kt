@@ -21,6 +21,14 @@ class GitHubClient(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
+    /** Patch bundle version for [source] from a builder release body, e.g.
+     *  "Patches: MorpheApp/morphe-patches/patches-2.4.0.mpp". */
+    private fun patchesVersion(source: UpdateSource, body: String?): String? {
+        val repo = source.patchesRepo ?: return null
+        val re = Regex(Regex.escape(repo) + """/patches-([0-9][0-9.]*)\.mpp""")
+        return body?.let { re.find(it)?.groupValues?.get(1) }
+    }
+
     /** Releases already fetched in this cycle, keyed by URL. */
     private val pageCache = mutableMapOf<String, List<GhRelease>>()
 
@@ -69,6 +77,10 @@ class GitHubClient(
                         sha256 = asset.digest?.substringAfter("sha256:", "")?.takeIf { it.isNotBlank() },
                         notes = release.body,
                         htmlUrl = release.htmlUrl,
+                        publishedAt = release.publishedAt,
+                        patchesVersion = patchesVersion(source, release.body),
+                        apiUrl = asset.apiUrl,
+                        requiresAuth = source.privateRepo,
                     )
                 }
             }

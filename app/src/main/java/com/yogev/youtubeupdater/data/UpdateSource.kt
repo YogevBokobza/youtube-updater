@@ -26,11 +26,17 @@ data class UpdateSource(
      * silently — we detect it and require uninstall-then-install instead.
      */
     val expectedSignerSha256: String? = null,
+    /** Patch bundle repo named in the release notes, used to show its version. */
+    val patchesRepo: String? = null,
+    /** Private GitHub repo: reading releases and downloading need a token. */
+    val privateRepo: Boolean = false,
 ) {
     enum class Mode { LATEST, SCAN }
 }
 
 object Sources {
+
+    private const val MORPHE_PATCHES = "MorpheApp/morphe-patches"
 
     /**
      * YouTube Morphe (patched YouTube). Built by j-hc's CI, where each release
@@ -50,6 +56,7 @@ object Sources {
         scanPages = 3,
         perPage = 30,
         expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
+        patchesRepo = MORPHE_PATCHES,
     )
 
     /**
@@ -71,6 +78,29 @@ object Sources {
         scanPages = 3,
         perPage = 30,
         expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
+        patchesRepo = MORPHE_PATCHES,
+    )
+
+    /**
+     * Gboard patched with jasonwu1994/Gboard-patches. That project ships only
+     * the patch bundle, so our own builder repo (a j-hc builder fork) patches
+     * Gboard in CI and releases the APK. Its default "Package Rename" patch
+     * gives it its own package, so it installs next to the stock Gboard.
+     * Builds are arm64-v8a only: the patches support no other ABI. The builder
+     * repo is private, so this source needs a GitHub token in Settings.
+     */
+    val GBOARD = UpdateSource(
+        key = "gboard",
+        displayName = "Gboard Patches",
+        packageName = "dev.jason.com.google.android.inputmethod.latin",
+        owner = "YogevBokobza",
+        repo = "gboard-morphe-builder",
+        assetPattern = Regex("""^gboard-patches-v(.+)-arm64-v8a\.apk$"""),
+        mode = UpdateSource.Mode.LATEST,
+        // The builder signs with the same j-hc key as the Morphe builds.
+        expectedSignerSha256 = "637c226c67aec0cdbc6f49cd476d5247f999122606286273e16233a913a088b4",
+        patchesRepo = "jasonwu1994/Gboard-patches",
+        privateRepo = true,
     )
 
     /** MicroG RE — clean tag-per-version releases; the universal APK. */
@@ -102,7 +132,7 @@ object Sources {
         mode = UpdateSource.Mode.LATEST,
     )
 
-    val ALL = listOf(YOUTUBE, MUSIC, MICROG, SELF)
+    val ALL = listOf(YOUTUBE, MUSIC, MICROG, GBOARD, SELF)
 
     fun byKey(key: String): UpdateSource? = ALL.firstOrNull { it.key == key }
 }
